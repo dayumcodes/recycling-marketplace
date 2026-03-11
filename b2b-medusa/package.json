@@ -13,9 +13,9 @@
     "medusa"
   ],
   "scripts": {
-    "build": "medusa build && node -e \"require('fs').copyFileSync('.medusa/server/medusa-config.js','medusa-config.js')\"",
+    "build": "medusa build && node -e \"require('fs').copyFileSync('.medusa/server/medusa-config.js','medusa-config.js')\" && node -e \"const fs=require('fs'),path=require('path');const src=path.join('.medusa','server','public','admin');const dest=path.join('public','admin');if(fs.existsSync(src)){fs.mkdirSync(path.dirname(dest),{recursive:true});fs.cpSync(src,dest,{recursive:true});}\"",
     "seed": "medusa exec ./src/scripts/seed.ts",
-    "start": "node node_modules/@medusajs/cli/bin/medusa start",
+    "start": "node node_modules/@medusajs/cli/cli.js start",
     "dev": "medusa develop",
     "test:integration:http": "TEST_TYPE=integration:http NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
     "test:integration:modules": "TEST_TYPE=integration:modules NODE_OPTIONS=--experimental-vm-modules jest --silent=false --runInBand --forceExit",
