@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'b2b-medusa/**'
   workflow_dispatch:
 
 jobs:
