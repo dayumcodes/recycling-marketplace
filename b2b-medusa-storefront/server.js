@@ -54,7 +54,6 @@ try {
   console.warn("WARNING: Could not read BUILD_ID:", err.message)
 }
 
-
 // Clean stale build-id directories from .next/static
 if (fs.existsSync(staticDir) && buildId) {
   const contents = fs.readdirSync(staticDir)

@@ -24,6 +24,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
+          
+      - name: Create .env.production from secret
+        working-directory: b2b-medusa-storefront
+        env:
+          FRONTEND_PROD_VARS: ${{ secrets.FRONTEND_PROD_VARS }}
+        run: |
+          echo "$FRONTEND_PROD_VARS" > .env.production
 
       - name: npm install and build (b2b-medusa-storefront)
         working-directory: b2b-medusa-storefront
