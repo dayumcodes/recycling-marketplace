@@ -12,6 +12,9 @@ coverage
 
 !src/**
 
+/public/admin
+public/admin
+
 ./tsconfig.tsbuildinfo
 medusa-db.sql
 build

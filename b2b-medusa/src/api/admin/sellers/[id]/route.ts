@@ -6,7 +6,7 @@ import { SELLER_MODULE } from "../../../../modules/seller"
 
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const sellerModuleService = req.scope.resolve(SELLER_MODULE)
-  const seller = await sellerModuleService.retrieveSellers(req.params.id)
+  const seller = await sellerModuleService.retrieveSeller(req.params.id)
   res.json({ seller })
 }
 
