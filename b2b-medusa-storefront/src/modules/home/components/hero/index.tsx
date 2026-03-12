@@ -94,7 +94,7 @@ const Hero = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-[#0B3D2E]">$450/t</p>
+                      <p className="font-bold text-[#0B3D2E]">AED 450/t</p>
                       <p className="text-xs text-emerald-500 font-medium">
                         Available
                       </p>

@@ -3,16 +3,18 @@ import { Suspense } from "react"
 import { listRegions } from "@lib/data/regions"
 import { listLocales } from "@lib/data/locales"
 import { getLocale } from "@lib/data/locale-actions"
+import { isCurrentUserAdmin } from "@lib/data/admin-check"
 import { StoreRegion } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CartButton from "@modules/layout/components/cart-button"
 import SideMenu from "@modules/layout/components/side-menu"
 
 export default async function Nav() {
-  const [regions, locales, currentLocale] = await Promise.all([
+  const [regions, locales, currentLocale, isAdmin] = await Promise.all([
     listRegions().then((regions: StoreRegion[]) => regions),
     listLocales(),
     getLocale(),
+    isCurrentUserAdmin(),
   ])
 
   return (
@@ -76,6 +78,12 @@ export default async function Nav() {
                 Contact
               </LocalizedClientLink>
               <LocalizedClientLink
+                className="text-white hover:text-white"
+                href="/seller"
+              >
+                Sell
+              </LocalizedClientLink>
+              <LocalizedClientLink
                 className="ml-1 px-3 py-1.5 rounded-lg bg-lime-400 text-slate-950 text-sm font-medium hover:bg-lime-300 transition-colors whitespace-nowrap"
                 href="/contact"
               >
@@ -96,7 +104,7 @@ export default async function Nav() {
               <CartButton />
             </Suspense>
             <div className="h-full flex items-center">
-              <SideMenu regions={regions} locales={locales} currentLocale={currentLocale} />
+              <SideMenu regions={regions} locales={locales} currentLocale={currentLocale} isAdmin={isAdmin} />
             </div>
           </div>
         </nav>

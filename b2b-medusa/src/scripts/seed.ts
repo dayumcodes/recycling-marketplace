@@ -4,6 +4,7 @@ import {
   Modules,
   ProductStatus,
 } from "@medusajs/framework/utils";
+import { SELLER_MODULE } from "../modules/seller";
 import {
   createWorkflow,
   transform,
@@ -62,8 +63,12 @@ export default async function seedDemoData({ container }: ExecArgs) {
   const fulfillmentModuleService = container.resolve(Modules.FULFILLMENT);
   const salesChannelModuleService = container.resolve(Modules.SALES_CHANNEL);
   const storeModuleService = container.resolve(Modules.STORE);
+  const regionModuleService = container.resolve(Modules.REGION);
+  const sellerModuleService = container.resolve(SELLER_MODULE);
 
-  const countries = ["gb", "de", "dk", "se", "fr", "es", "it"];
+  let shippingProfile: { id: string } | null = null;
+
+  const countries = ["ae", "gb", "de", "dk", "se", "fr", "es", "it"];
 
   logger.info("Seeding store data...");
   const [store] = await storeModuleService.listStores();
@@ -92,11 +97,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
       store_id: store.id,
       supported_currencies: [
         {
-          currency_code: "eur",
+          currency_code: "aed",
           is_default: true,
-        },
-        {
-          currency_code: "usd",
         },
       ],
     },
@@ -111,28 +113,43 @@ export default async function seedDemoData({ container }: ExecArgs) {
     },
   });
   logger.info("Seeding region data...");
-  const { result: regionResult } = await createRegionsWorkflow(container).run({
-    input: {
-      regions: [
-        {
-          name: "Europe",
-          currency_code: "eur",
-          countries,
-          payment_providers: ["pp_system_default"],
-        },
-      ],
-    },
-  });
-  const region = regionResult[0];
-  logger.info("Finished seeding regions.");
+  const existingRegions = await regionModuleService.listRegions({});
+  let region;
+  if (existingRegions.length > 0) {
+    logger.info("Regions already exist, skipping region/tax/stock/fulfillment/API-key creation.");
+    region = existingRegions[0];
+  } else {
+    const { result: regionResult } = await createRegionsWorkflow(container).run({
+      input: {
+        regions: [
+          {
+            name: "UAE",
+            currency_code: "aed",
+            countries: ["ae"],
+            payment_providers: ["pp_system_default"],
+          },
+          {
+            name: "Europe",
+            currency_code: "eur",
+            countries: ["gb", "de", "dk", "se", "fr", "es", "it"],
+            payment_providers: ["pp_system_default"],
+          },
+        ],
+      },
+    });
+    region = regionResult[0];
+    logger.info("Finished seeding regions.");
 
-  logger.info("Seeding tax regions...");
-  await createTaxRegionsWorkflow(container).run({
-    input: countries.map((country_code) => ({
-      country_code,
-      provider_id: "tp_system",
-    })),
-  });
+    logger.info("Seeding tax regions...");
+    await createTaxRegionsWorkflow(container).run({
+      input: countries.map((country_code) => ({
+        country_code,
+        provider_id: "tp_system",
+      })),
+    });
+  }
+
+  if (existingRegions.length === 0) {
   logger.info("Finished seeding tax regions.");
 
   logger.info("Seeding stock location data...");
@@ -142,10 +159,10 @@ export default async function seedDemoData({ container }: ExecArgs) {
     input: {
       locations: [
         {
-          name: "European Warehouse",
+          name: "UAE Warehouse",
           address: {
-            city: "Copenhagen",
-            country_code: "DK",
+            city: "Dubai",
+            country_code: "AE",
             address_1: "",
           },
         },
@@ -176,7 +193,7 @@ export default async function seedDemoData({ container }: ExecArgs) {
   const shippingProfiles = await fulfillmentModuleService.listShippingProfiles({
     type: "default",
   });
-  let shippingProfile = shippingProfiles.length ? shippingProfiles[0] : null;
+  shippingProfile = shippingProfiles.length ? shippingProfiles[0] : null;
 
   if (!shippingProfile) {
     const { result: shippingProfileResult } =
@@ -194,40 +211,20 @@ export default async function seedDemoData({ container }: ExecArgs) {
   }
 
   const fulfillmentSet = await fulfillmentModuleService.createFulfillmentSets({
-    name: "European Warehouse delivery",
+    name: "UAE & Europe Warehouse delivery",
     type: "shipping",
     service_zones: [
       {
-        name: "Europe",
+        name: "UAE & Europe",
         geo_zones: [
-          {
-            country_code: "gb",
-            type: "country",
-          },
-          {
-            country_code: "de",
-            type: "country",
-          },
-          {
-            country_code: "dk",
-            type: "country",
-          },
-          {
-            country_code: "se",
-            type: "country",
-          },
-          {
-            country_code: "fr",
-            type: "country",
-          },
-          {
-            country_code: "es",
-            type: "country",
-          },
-          {
-            country_code: "it",
-            type: "country",
-          },
+          { country_code: "ae", type: "country" },
+          { country_code: "gb", type: "country" },
+          { country_code: "de", type: "country" },
+          { country_code: "dk", type: "country" },
+          { country_code: "se", type: "country" },
+          { country_code: "fr", type: "country" },
+          { country_code: "es", type: "country" },
+          { country_code: "it", type: "country" },
         ],
       },
     ],
@@ -257,16 +254,12 @@ export default async function seedDemoData({ container }: ExecArgs) {
         },
         prices: [
           {
-            currency_code: "usd",
-            amount: 10,
-          },
-          {
-            currency_code: "eur",
-            amount: 10,
+            currency_code: "aed",
+            amount: 40,
           },
           {
             region_id: region.id,
-            amount: 10,
+            amount: 40,
           },
         ],
         rules: [
@@ -295,16 +288,12 @@ export default async function seedDemoData({ container }: ExecArgs) {
         },
         prices: [
           {
-            currency_code: "usd",
-            amount: 10,
-          },
-          {
-            currency_code: "eur",
-            amount: 10,
+            currency_code: "aed",
+            amount: 80,
           },
           {
             region_id: region.id,
-            amount: 10,
+            amount: 80,
           },
         ],
         rules: [
@@ -369,35 +358,76 @@ export default async function seedDemoData({ container }: ExecArgs) {
     },
   });
   logger.info("Finished seeding publishable API key data.");
+  } // end if (existingRegions.length === 0) — infra block
+
+  // Ensure we have a shipping profile for product seeding (required when regions already existed)
+  if (!shippingProfile) {
+    const existingProfiles = await fulfillmentModuleService.listShippingProfiles({
+      type: "default",
+    });
+    if (existingProfiles.length > 0) {
+      shippingProfile = existingProfiles[0];
+    } else {
+      const { result: shippingProfileResult } =
+        await createShippingProfilesWorkflow(container).run({
+          input: {
+            data: [
+              { name: "Default Shipping Profile", type: "default" },
+            ],
+          },
+        });
+      shippingProfile = shippingProfileResult[0];
+    }
+  }
+
+  const { data: existingProducts } = await query.graph({
+    entity: "product",
+    fields: ["id"],
+  });
+  if (existingProducts.length > 0) {
+    logger.info(
+      `${existingProducts.length} products already exist. Skipping product/category/inventory seed. Run seed-sellers separately if needed.`
+    );
+    return;
+  }
 
   logger.info("Seeding product data...");
 
-  const { result: categoryResult } = await createProductCategoriesWorkflow(
-    container
-  ).run({
-    input: {
-      product_categories: [
-        {
-          name: "Shirts",
-          is_active: true,
-        },
-        {
-          name: "Sweatshirts",
-          is_active: true,
-        },
-        {
-          name: "Pants",
-          is_active: true,
-        },
-        {
-          name: "Merch",
-          is_active: true,
-        },
-      ],
-    },
-  });
+  const categoryData = [
+    { name: "Shirts", is_active: true },
+    { name: "Sweatshirts", is_active: true },
+    { name: "Pants", is_active: true },
+    { name: "Merch", is_active: true },
+    { name: "Paper", handle: "paper", is_active: true },
+    { name: "Plastic", handle: "plastic", is_active: true },
+    { name: "Aluminium", handle: "aluminium", is_active: true },
+    { name: "Steel", handle: "steel", is_active: true },
+    { name: "Copper", handle: "copper", is_active: true },
+    { name: "Iron", handle: "iron", is_active: true },
+    { name: "Tin", handle: "tin", is_active: true },
+    { name: "Brass", handle: "brass", is_active: true },
+    { name: "E-waste", handle: "e-waste", is_active: true },
+    { name: "Glass Bottles", handle: "glass-bottles", is_active: true },
+  ];
 
-  await createProductsWorkflow(container).run({
+  let categoryResult: { id: string; name?: string; handle?: string }[];
+  const { data: existingCategories } = await query.graph({
+    entity: "product_category",
+    fields: ["id", "name", "handle"],
+  });
+  if (existingCategories.length > 0) {
+    logger.info(
+      `${existingCategories.length} product category(ies) already exist. Using existing categories.`
+    );
+    categoryResult = existingCategories as { id: string; name?: string; handle?: string }[];
+  } else {
+    const { result } = await createProductCategoriesWorkflow(container).run({
+      input: { product_categories: categoryData },
+    });
+    categoryResult = result;
+  }
+
+  const { result: productResult } = await createProductsWorkflow(container).run({
     input: {
       products: [
         {
@@ -445,12 +475,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -463,12 +489,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -481,12 +503,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -499,12 +517,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -517,12 +531,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -535,12 +545,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -553,12 +559,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -571,12 +573,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -621,12 +619,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -638,12 +632,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -655,12 +645,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -672,12 +658,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -722,12 +704,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -739,12 +717,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -756,12 +730,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -773,12 +743,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -823,12 +789,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -840,12 +802,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -857,12 +815,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -874,12 +828,8 @@ export default async function seedDemoData({ container }: ExecArgs) {
               },
               prices: [
                 {
-                  amount: 10,
-                  currency_code: "eur",
-                },
-                {
-                  amount: 15,
-                  currency_code: "usd",
+                  amount: 50,
+                  currency_code: "aed",
                 },
               ],
             },
@@ -890,33 +840,133 @@ export default async function seedDemoData({ container }: ExecArgs) {
             },
           ],
         },
+        {
+          title: "Recycled Paper - OCC",
+          category_ids: [
+            categoryResult.find((cat) => cat.handle === "paper")!.id,
+          ],
+          description:
+            "Old Corrugated Cardboard (OCC) - clean, dry cardboard suitable for recycling. Minimum order for B2B.",
+          handle: "recycled-paper-occ",
+          weight: 1000,
+          status: ProductStatus.PUBLISHED,
+          shipping_profile_id: shippingProfile.id,
+          options: [{ title: "Type", values: ["Default"] }],
+          variants: [
+            {
+              title: "Default",
+              sku: "SCRAP-PAPER-OCC",
+              options: { Type: "Default" },
+              prices: [{ amount: 120, currency_code: "aed" }],
+            },
+          ],
+          sales_channels: [
+            { id: defaultSalesChannel[0].id },
+          ],
+        },
+        {
+          title: "HDPE Plastic Scrap",
+          category_ids: [
+            categoryResult.find((cat) => cat.handle === "plastic")!.id,
+          ],
+          description:
+            "High-Density Polyethylene scrap, sorted and baled. Ideal for recycling facilities.",
+          handle: "hdpe-plastic-scrap",
+          weight: 500,
+          status: ProductStatus.PUBLISHED,
+          shipping_profile_id: shippingProfile.id,
+          options: [{ title: "Type", values: ["Default"] }],
+          variants: [
+            {
+              title: "Default",
+              sku: "SCRAP-PLASTIC-HDPE",
+              options: { Type: "Default" },
+              prices: [{ amount: 350, currency_code: "aed" }],
+            },
+          ],
+          sales_channels: [
+            { id: defaultSalesChannel[0].id },
+          ],
+        },
+        {
+          title: "Aluminium Scrap - Clean",
+          category_ids: [
+            categoryResult.find((cat) => cat.handle === "aluminium")!.id,
+          ],
+          description:
+            "Clean aluminium scrap, sorted by grade. Suitable for smelting and recycling.",
+          handle: "aluminium-scrap-clean",
+          weight: 250,
+          status: ProductStatus.PUBLISHED,
+          shipping_profile_id: shippingProfile.id,
+          options: [{ title: "Type", values: ["Default"] }],
+          variants: [
+            {
+              title: "Default",
+              sku: "SCRAP-ALU-CLEAN",
+              options: { Type: "Default" },
+              prices: [{ amount: 800, currency_code: "aed" }],
+            },
+          ],
+          sales_channels: [
+            { id: defaultSalesChannel[0].id },
+          ],
+        },
       ],
     },
   });
   logger.info("Finished seeding product data.");
 
-  logger.info("Seeding inventory levels.");
-
-  const { data: inventoryItems } = await query.graph({
-    entity: "inventory_item",
-    fields: ["id"],
-  });
-
-  const inventoryLevels: CreateInventoryLevelInput[] = [];
-  for (const inventoryItem of inventoryItems) {
-    const inventoryLevel = {
-      location_id: stockLocation.id,
-      stocked_quantity: 1000000,
-      inventory_item_id: inventoryItem.id,
-    };
-    inventoryLevels.push(inventoryLevel);
+  logger.info("Seeding sellers and product–seller links.");
+  try {
+    const sellersData = [
+      { name: "ScrapCircle Direct", handle: "scrapcircle-direct" },
+      { name: "Green Metals Co", handle: "green-metals-co" },
+      { name: "Eco Plastics UAE", handle: "eco-plastics-uae" },
+    ];
+    const createdSellers = await sellerModuleService.createSellers(sellersData);
+    for (let i = 0; i < Math.min(createdSellers.length, productResult.length); i++) {
+      await link.create({
+        [Modules.PRODUCT]: { product_id: productResult[i].id },
+        [SELLER_MODULE]: { seller_id: createdSellers[i].id },
+      });
+    }
+    logger.info("Finished seeding sellers and links.");
+  } catch (err) {
+    logger.warn(
+      "Sellers/links seed skipped (run 'npx medusa db:generate seller' and 'npx medusa db:migrate' first): " +
+        (err instanceof Error ? err.message : String(err))
+    );
   }
 
-  await createInventoryLevelsWorkflow(container).run({
-    input: {
-      inventory_levels: inventoryLevels,
-    },
-  });
+  logger.info("Seeding inventory levels.");
 
-  logger.info("Finished seeding inventory levels data.");
+  const { data: stockLocations } = await query.graph({
+    entity: "stock_location",
+    fields: ["id"],
+  });
+  const stockLocationId = stockLocations[0]?.id;
+
+  if (stockLocationId) {
+    const { data: inventoryItems } = await query.graph({
+      entity: "inventory_item",
+      fields: ["id"],
+    });
+
+    const inventoryLevels: CreateInventoryLevelInput[] = [];
+    for (const inventoryItem of inventoryItems) {
+      inventoryLevels.push({
+        location_id: stockLocationId,
+        stocked_quantity: 1000000,
+        inventory_item_id: inventoryItem.id,
+      });
+    }
+
+    await createInventoryLevelsWorkflow(container).run({
+      input: { inventory_levels: inventoryLevels },
+    });
+    logger.info("Finished seeding inventory levels data.");
+  } else {
+    logger.warn("No stock location found, skipping inventory levels.");
+  }
 }

@@ -1,5 +1,6 @@
 import { listProductsWithSort } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
+import { getSellersByProductIds } from "@lib/data/sellers"
 import ProductPreview from "@modules/products/components/product-preview"
 import { Pagination } from "@modules/store/components/pagination"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
@@ -64,6 +65,9 @@ export default async function PaginatedProducts({
     countryCode,
   })
 
+  const productIds = products.map((p) => p.id!).filter(Boolean)
+  const sellersByProductId = await getSellersByProductIds(productIds)
+
   const totalPages = Math.ceil(count / PRODUCT_LIMIT)
 
   return (
@@ -75,7 +79,11 @@ export default async function PaginatedProducts({
         {products.map((p) => {
           return (
             <li key={p.id}>
-              <ProductPreview product={p} region={region} />
+              <ProductPreview
+                product={p}
+                region={region}
+                seller={p.id ? sellersByProductId[p.id] ?? null : null}
+              />
             </li>
           )
         })}

@@ -5,6 +5,7 @@ import ProductActions from "@modules/products/components/product-actions"
 import ProductOnboardingCta from "@modules/products/components/product-onboarding-cta"
 import ProductTabs from "@modules/products/components/product-tabs"
 import RelatedProducts from "@modules/products/components/related-products"
+import type { StoreSeller } from "@lib/data/sellers"
 import ProductInfo from "@modules/products/templates/product-info"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
@@ -18,6 +19,7 @@ type ProductTemplateProps = {
   region: HttpTypes.StoreRegion
   countryCode: string
   images: HttpTypes.StoreProductImage[]
+  seller?: StoreSeller | null
 }
 
 const ProductTemplate: React.FC<ProductTemplateProps> = ({
@@ -25,6 +27,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   region,
   countryCode,
   images,
+  seller,
 }) => {
   if (!product || !product.id) {
     return notFound()
@@ -37,7 +40,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
         data-testid="product-container"
       >
         <div className="flex flex-col small:sticky small:top-48 small:py-0 small:max-w-[300px] w-full py-8 gap-y-6">
-          <ProductInfo product={product} />
+          <ProductInfo product={product} seller={seller} />
           <ProductTabs product={product} />
         </div>
         <div className="block w-full relative">

@@ -1,4 +1,5 @@
 import { listProducts } from "@lib/data/products"
+import { getSellersByProductIds } from "@lib/data/sellers"
 import { HttpTypes } from "@medusajs/types"
 import { Text } from "@medusajs/ui"
 
@@ -26,6 +27,9 @@ export default async function ProductRail({
     return null
   }
 
+  const productIds = pricedProducts.map((p) => p.id!).filter(Boolean)
+  const sellersByProductId = await getSellersByProductIds(productIds)
+
   return (
     <div className="content-container py-12 small:py-24">
       <div className="flex justify-between mb-8">
@@ -38,7 +42,12 @@ export default async function ProductRail({
         {pricedProducts &&
           pricedProducts.map((product) => (
             <li key={product.id}>
-              <ProductPreview product={product} region={region} isFeatured />
+              <ProductPreview
+                product={product}
+                region={region}
+                isFeatured
+                seller={product.id ? sellersByProductId[product.id] ?? null : null}
+              />
             </li>
           ))}
       </ul>

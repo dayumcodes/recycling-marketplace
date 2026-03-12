@@ -1,7 +1,8 @@
 import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
+import { getSellersByProductIds } from "@lib/data/sellers"
 import { HttpTypes } from "@medusajs/types"
-import Product from "../product-preview"
+import ProductPreview from "../product-preview"
 
 type RelatedProductsProps = {
   product: HttpTypes.StoreProduct
@@ -46,6 +47,9 @@ export default async function RelatedProducts({
     return null
   }
 
+  const productIds = products.map((p) => p.id!).filter(Boolean)
+  const sellersByProductId = await getSellersByProductIds(productIds)
+
   return (
     <div className="product-page-constraint">
       <div className="flex flex-col items-center text-center mb-16">
@@ -58,9 +62,13 @@ export default async function RelatedProducts({
       </div>
 
       <ul className="grid grid-cols-2 small:grid-cols-3 medium:grid-cols-4 gap-x-6 gap-y-8">
-        {products.map((product) => (
-          <li key={product.id}>
-            <Product region={region} product={product} />
+        {products.map((p) => (
+          <li key={p.id}>
+            <ProductPreview
+              region={region}
+              product={p}
+              seller={p.id ? sellersByProductId[p.id] ?? null : null}
+            />
           </li>
         ))}
       </ul>

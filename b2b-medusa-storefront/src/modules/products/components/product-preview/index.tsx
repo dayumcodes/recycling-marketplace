@@ -1,8 +1,8 @@
 import { Text } from "@medusajs/ui"
-import { listProducts } from "@lib/data/products"
 import { getProductPrice } from "@lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import type { StoreSeller } from "@lib/data/sellers"
 import Thumbnail from "../thumbnail"
 import PreviewPrice from "./price"
 
@@ -10,10 +10,12 @@ export default async function ProductPreview({
   product,
   isFeatured,
   region,
+  seller,
 }: {
   product: HttpTypes.StoreProduct
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
+  seller?: StoreSeller | null
 }) {
   // const pricedProduct = await listProducts({
   //   regionId: region.id,
@@ -45,6 +47,11 @@ export default async function ProductPreview({
             {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
           </div>
         </div>
+        {seller && (
+          <Text className="text-ui-fg-muted txt-compact-small mt-1" data-testid="product-seller">
+            Sold by {seller.name}
+          </Text>
+        )}
       </div>
     </LocalizedClientLink>
   )

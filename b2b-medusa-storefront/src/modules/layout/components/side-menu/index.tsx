@@ -11,9 +11,10 @@ import LanguageSelect from "../language-select"
 import { HttpTypes } from "@medusajs/types"
 import { Locale } from "@lib/data/locales"
 
-const SideMenuItems = {
+const BASE_MENU_ITEMS: Record<string, string> = {
   Home: "/",
-  Store: "/store",
+  Marketplace: "/marketplace",
+  "Seller Dashboard": "/seller",
   Account: "/account",
   Cart: "/cart",
 }
@@ -22,9 +23,14 @@ type SideMenuProps = {
   regions: HttpTypes.StoreRegion[] | null
   locales: Locale[] | null
   currentLocale: string | null
+  isAdmin?: boolean
 }
 
-const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
+const SideMenu = ({ regions, locales, currentLocale, isAdmin }: SideMenuProps) => {
+  const menuItems = { ...BASE_MENU_ITEMS }
+  if (isAdmin) {
+    menuItems["Admin Panel"] = "/admin/sellers"
+  }
   const countryToggleState = useToggleState()
   const languageToggleState = useToggleState()
 
@@ -72,7 +78,7 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                       </button>
                     </div>
                     <ul className="flex flex-col gap-6 items-start justify-start">
-                      {Object.entries(SideMenuItems).map(([name, href]) => {
+                      {Object.entries(menuItems).map(([name, href]) => {
                         return (
                           <li key={name}>
                             <LocalizedClientLink
@@ -126,7 +132,7 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                         />
                       </div>
                       <Text className="flex justify-between txt-compact-small">
-                        © {new Date().getFullYear()} Medusa Store. All rights
+                        © {new Date().getFullYear()} ScrapCircle. All rights
                         reserved.
                       </Text>
                     </div>
