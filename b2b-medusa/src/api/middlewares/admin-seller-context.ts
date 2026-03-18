@@ -19,6 +19,7 @@ export async function adminSellerContext(
     return next()
   }
 
+  
   const sellerModuleService = req.scope.resolve(SELLER_MODULE)
   const sellers = await sellerModuleService.listSellers({
     admin_user_id: auth.actor_id,
