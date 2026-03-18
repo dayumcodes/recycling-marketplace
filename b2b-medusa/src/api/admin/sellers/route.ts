@@ -6,6 +6,7 @@ import { SELLER_MODULE } from "../../../modules/seller"
 
 type RequestWithSeller = MedusaRequest & { sellerContext?: { id: string } }
 
+
 export const GET = async (
   req: MedusaRequest,
   res: MedusaResponse
