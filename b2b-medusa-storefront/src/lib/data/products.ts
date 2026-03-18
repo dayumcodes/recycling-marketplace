@@ -159,6 +159,13 @@ export const listProductsWithSort = async ({
   let totalCount = 0
   const all: HttpTypes.StoreProduct[] = []
 
+  // Never allow caller pagination params to override our batching
+  const {
+    limit: _ignoreLimit,
+    offset: _ignoreOffset,
+    ...restQueryParams
+  } = (queryParams ?? {}) as any
+
   if (debug) {
     const hasAuth = "authorization" in headers
     console.log("[marketplace][listProductsWithSort] start", {
@@ -170,7 +177,7 @@ export const listProductsWithSort = async ({
       countryCode,
       regionId: region.id,
       hasAuth,
-      queryParams,
+      queryParams: restQueryParams,
     })
   }
 
@@ -184,12 +191,12 @@ export const listProductsWithSort = async ({
     }>(`/store/products`, {
       method: "GET",
       query: {
-        limit: batchLimit,
-        offset,
         region_id: region.id,
         fields:
           "*variants.calculated_price,+variants.inventory_quantity,*variants.images,+metadata,+tags,",
-        ...queryParams,
+        ...restQueryParams,
+        limit: batchLimit,
+        offset,
       },
       headers,
       next,
@@ -209,9 +216,10 @@ export const listProductsWithSort = async ({
       })
     }
 
-    offset += batchLimit
+    const effectiveLimit = batchLimit
+    offset += effectiveLimit
 
-    const exhausted = products?.length ? products.length < batchLimit : true
+    const exhausted = products?.length ? products.length < effectiveLimit : true
     if (all.length >= needed || offset >= totalCount || exhausted) {
       break
     }

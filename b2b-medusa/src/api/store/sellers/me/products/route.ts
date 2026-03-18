@@ -94,7 +94,9 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   if (!channelIds?.length) {
     const channels = await salesChannelModuleService.listSalesChannels({})
     if (channels.length) {
-      channelIds = [channels[0].id]
+      // Ensure seller-created products are visible in storefront regardless of which
+      // sales channel the publishable key is associated with.
+      channelIds = channels.map((c) => c.id)
     }
   }
 

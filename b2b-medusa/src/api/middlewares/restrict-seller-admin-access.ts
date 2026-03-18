@@ -19,6 +19,8 @@ const SELLER_ALLOWED_PREFIXES = [
   "/admin/product-categories",
   "/admin/product-types",
   "/admin/price-preferences",
+  "/admin/price-lists",
+  "/admin/promotions",
   "/admin/inventory-items",
   "/admin/reservations",
   "/admin/orders",
@@ -27,6 +29,8 @@ const SELLER_ALLOWED_PREFIXES = [
   "/admin/collections",
   "/admin/categories",
   "/admin/sales-channels",
+  "/admin/customers",
+  "/admin/customer-groups",
   "/admin/regions",
   "/admin/currencies",
   "/admin/tax-rates",
@@ -60,10 +64,6 @@ export async function restrictSellerAdminAccess(
   const raw = (req as any).originalUrl ?? req.path ?? (req as any).url ?? ""
   const path = typeof raw === "string" ? raw.split("?")[0] : ""
   const allowed = isAllowedForSeller(path)
-
-  // #region agent log
-  fetch('http://127.0.0.1:7613/ingest/ea5d5370-cab2-44a5-b9a3-a262579a2415',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'14c452'},body:JSON.stringify({sessionId:'14c452',runId:'seller-restrict',hypothesisId:'H1',location:'restrict-seller-admin-access.ts:check',message:'restrict check',data:{raw,path,allowed,sellerContextId:sellerContext.id,reqPath:req.path,reqUrl:(req as any).url,reqOriginalUrl:(req as any).originalUrl,reqBaseUrl:(req as any).baseUrl},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
 
   if (!allowed) {
     res.status(403).json({
