@@ -39,27 +39,32 @@ const regionMap = new Map<string, HttpTypes.StoreRegion>()
 
 export const getRegion = async (countryCode: string) => {
   try {
-    if (regionMap.has(countryCode)) {
-      return regionMap.get(countryCode)
+    const normalized = countryCode?.toLowerCase() || ""
+    if (normalized && regionMap.has(normalized)) {
+      return regionMap.get(normalized)
     }
 
     const regions = await listRegions()
 
-    if (!regions) {
+    if (!regions?.length) {
       return null
     }
 
     regions.forEach((region) => {
       region.countries?.forEach((c) => {
-        regionMap.set(c?.iso_2 ?? "", region)
+        const code = (c?.iso_2 ?? "").toLowerCase()
+        if (code) {
+          regionMap.set(code, region)
+        }
       })
     })
 
-    const region = countryCode
-      ? regionMap.get(countryCode)
+    const byCountry = normalized
+      ? regionMap.get(normalized)
       : regionMap.get("us")
 
-    return region
+    // Fallback when URL country is not on any region (stale DB, new country in URL, etc.)
+    return byCountry ?? regions[0] ?? null
   } catch (e: any) {
     return null
   }

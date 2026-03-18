@@ -34,6 +34,8 @@ export default async function PaginatedProducts({
     limit: 12,
   }
 
+  const debug = process.env.DEBUG_MARKETPLACE_PRODUCTS === "1"
+
   if (collectionId) {
     queryParams["collection_id"] = [collectionId]
   }
@@ -53,7 +55,21 @@ export default async function PaginatedProducts({
   const region = await getRegion(countryCode)
 
   if (!region) {
-    return null
+    return (
+      <p className="text-base-regular text-slate-600">
+        Catalog is temporarily unavailable. Please try again later.
+      </p>
+    )
+  }
+
+  if (debug) {
+    console.log("[marketplace][PaginatedProducts] params", {
+      page,
+      sortBy,
+      countryCode,
+      regionId: region.id,
+      queryParams,
+    })
   }
 
   let {
@@ -64,6 +80,14 @@ export default async function PaginatedProducts({
     sortBy,
     countryCode,
   })
+
+  if (debug) {
+    console.log("[marketplace][PaginatedProducts] results", {
+      count,
+      returned: products.length,
+      ids: products.map((p) => p.id).filter(Boolean).slice(0, 5),
+    })
+  }
 
   const productIds = products.map((p) => p.id!).filter(Boolean)
   const sellersByProductId = await getSellersByProductIds(productIds)

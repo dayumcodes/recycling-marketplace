@@ -12,7 +12,12 @@ const getBaseUrl = () => {
   return process.env.MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 }
 
-export default function SellerSignupForm() {
+type SellerSignupFormProps = {
+  /** Called after successful signup (e.g. to close the drawer). */
+  onSuccess?: () => void
+}
+
+export default function SellerSignupForm({ onSuccess }: SellerSignupFormProps) {
   const [loading, setLoading] = useState(false)
   const [publishableKey, setPublishableKey] = useState<string | null>(null)
   const [storefrontUrl, setStorefrontUrl] = useState<string>("")
@@ -45,7 +50,7 @@ export default function SellerSignupForm() {
     setLoading(true)
     try {
       const base = getBaseUrl()
-      const { key, storefrontUrl: signupStorefrontUrl } = await ensureConfig()
+      const { key } = await ensureConfig()
       if (!key) {
         toast.error(
           "Backend is missing PUBLISHABLE_API_KEY. Add it to the backend .env (same value as storefront publishable key) and restart."
@@ -74,12 +79,11 @@ export default function SellerSignupForm() {
         toast.error(data?.message || "Sign up failed")
         return
       }
-      const loginPath = "/account"
-      const loginUrl = `${signupStorefrontUrl.replace(/\/$/, "")}${loginPath}`
-      toast.success(
-        `Seller account created. Sign in on the storefront at ${loginUrl} with your email and password. (You cannot sign in here in Admin—sellers use the storefront.)`,
-        { description: `Login URL: ${loginUrl}` }
-      )
+      toast.success("Account created successfully", {
+        description:
+          "Sign in on the storefront with your email and password.",
+      })
+      onSuccess?.()
       setEmail("")
       setPassword("")
       setFirstName("")
