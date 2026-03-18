@@ -24,7 +24,6 @@ export async function GET() {
     }
   } catch {}
 
-  
   const staticDir = path.join(nextDir, "static")
   let staticDirs: string[] = []
   try {
