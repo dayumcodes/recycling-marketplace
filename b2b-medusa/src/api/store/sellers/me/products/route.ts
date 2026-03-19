@@ -9,6 +9,62 @@ import {
 import { createProductsWorkflow } from "@medusajs/medusa/core-flows"
 import { SELLER_MODULE } from "../../../../../modules/seller"
 
+function getBackendOrigin(req: MedusaRequest): string {
+  const envUrl =
+    process.env.MEDUSA_BACKEND_URL ||
+    process.env.MEDUSA_PUBLIC_URL ||
+    process.env.BACKEND_URL
+
+  if (envUrl) {
+    try {
+      return new URL(envUrl).origin
+    } catch {
+      // fall through to request host
+    }
+  }
+
+  const proto =
+    (req.headers["x-forwarded-proto"] as string) ||
+    req.protocol ||
+    "https"
+
+  const host =
+    (req.headers["x-forwarded-host"] as string) ||
+    req.get("host") ||
+    "localhost:9000"
+
+  return `${proto}://${host}`
+}
+
+function normalizeImageUrl(url: string, backendOrigin: string): string {
+  const v = (url || "").trim()
+  if (!v) return v
+
+  // Keep data/blob URLs untouched
+  if (v.startsWith("data:") || v.startsWith("blob:")) return v
+
+  // Relative paths -> absolute on backend
+  if (v.startsWith("/")) return `${backendOrigin}${v}`
+
+  try {
+    const u = new URL(v)
+
+    // Rewrite localhost image URLs to backend origin
+    if (
+      u.hostname === "localhost" ||
+      u.hostname === "127.0.0.1" ||
+      u.hostname === "::1"
+    ) {
+      return `${backendOrigin}${u.pathname}${u.search}`
+    }
+
+    return v
+  } catch {
+    // If it's a non-URL string, store as-is
+    return v
+  }
+}
+
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   const customerId = (req as any).auth_context?.actor_id
   if (!customerId) {
@@ -129,11 +185,16 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
         ],
   }
 
+  const backendOrigin = getBackendOrigin(req)
+
   if (thumbnail) {
-    productData.thumbnail = thumbnail
+    productData.thumbnail = normalizeImageUrl(thumbnail, backendOrigin)
   }
   if (images?.length) {
-    productData.images = images.map((url: string) => ({ url }))
+    productData.images = images
+      .map((url: string) => normalizeImageUrl(url, backendOrigin))
+      .filter(Boolean)
+      .map((url: string) => ({ url }))
   }
 
   if (category_ids?.length) {
