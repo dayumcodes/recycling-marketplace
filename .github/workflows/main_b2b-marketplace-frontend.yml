@@ -43,6 +43,8 @@ jobs:
         with:
           name: node-app
           path: b2b-medusa-storefront
+          include-hidden-files: true
+
 
   deploy:
     runs-on: ubuntu-latest
