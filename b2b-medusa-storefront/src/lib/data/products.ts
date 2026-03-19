@@ -4,8 +4,9 @@ import { sdk } from "@lib/config"
 import { sortProducts } from "@lib/util/sort-products"
 import { HttpTypes } from "@medusajs/types"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
-import { getAuthHeaders, getCacheOptions } from "./cookies"
+import { getAuthHeaders } from "./cookies"
 import { getRegion, retrieveRegion } from "./regions"
+import { getMedusaStoreProductsFetchInit } from "@lib/util/medusa-store-products-fetch"
 
 export const listProducts = async ({
   pageParam = 1,
@@ -51,9 +52,7 @@ export const listProducts = async ({
 
   const debug = process.env.DEBUG_MARKETPLACE_PRODUCTS === "1"
 
-  const next = {
-    ...(await getCacheOptions("products")),
-  }
+  const { next, cache } = await getMedusaStoreProductsFetchInit()
 
   if (debug) {
     const hasAuth = "authorization" in headers
@@ -85,7 +84,7 @@ export const listProducts = async ({
         },
         headers,
         next,
-        cache: "force-cache",
+        cache,
       }
     )
     .then(({ products, count }) => {
@@ -200,7 +199,7 @@ export const listProductsWithSort = async ({
       },
       headers,
       next,
-      cache: "force-cache",
+      cache,
     })
 
     totalCount = count ?? 0

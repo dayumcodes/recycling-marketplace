@@ -55,6 +55,13 @@ export async function GET() {
       NODE_ENV: process.env.NODE_ENV,
       MEDUSA_BACKEND_URL: process.env.MEDUSA_BACKEND_URL ? "set" : "not set",
       NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || "not set",
+      MEDUSA_STORE_PRODUCTS_CACHE:
+        process.env.MEDUSA_STORE_PRODUCTS_CACHE || "revalidate (default)",
+      MEDUSA_STORE_PRODUCTS_REVALIDATE_SECONDS:
+        process.env.MEDUSA_STORE_PRODUCTS_REVALIDATE_SECONDS || "60 (default)",
+      MARKETPLACE_DEBUG_SECRET: process.env.MARKETPLACE_DEBUG_SECRET
+        ? "set"
+        : "not set",
     },
     cwd: process.cwd(),
     timestamp: new Date().toISOString(),
