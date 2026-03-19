@@ -147,9 +147,7 @@ export const listProductsWithSort = async ({
     ...(await getAuthHeaders()),
   }
 
-  const next = {
-    ...(await getCacheOptions("products")),
-  }
+  const { next, cache } = await getMedusaStoreProductsFetchInit()
 
   const pageParam = Math.max(page, 1)
   const needed = pageParam * limit
