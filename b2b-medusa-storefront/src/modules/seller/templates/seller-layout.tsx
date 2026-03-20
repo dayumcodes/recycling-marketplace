@@ -12,8 +12,8 @@ interface SellerDashboardLayoutProps {
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/seller" },
   { label: "Products", href: "/seller/products" },
-  { label: "Add Product", href: "/seller/products/new" },
-]
+  { label: "Add Product", href: "/seller/products/new", requiresVerification: true },
+] as const
 
 const SellerDashboardLayout: React.FC<SellerDashboardLayoutProps> = ({
   customer,
@@ -53,15 +53,34 @@ const SellerDashboardLayout: React.FC<SellerDashboardLayoutProps> = ({
               <p className="text-sm text-slate-500 mt-1">{seller.name}</p>
             )}
           </div>
-          {NAV_ITEMS.map((item) => (
-            <LocalizedClientLink
-              key={item.href}
-              href={item.href}
-              className="block px-4 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-[#0B3D2E] transition-colors"
-            >
-              {item.label}
-            </LocalizedClientLink>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const blocked =
+              "requiresVerification" in item &&
+              item.requiresVerification &&
+              seller &&
+              !seller.is_verified
+            if (blocked) {
+              return (
+                <div key={item.href} className="px-4 py-2.5">
+                  <span className="block text-sm font-medium text-slate-400 cursor-not-allowed">
+                    {item.label}
+                  </span>
+                  <p className="text-xs text-amber-800 mt-1 leading-snug">
+                    Available after platform admin verifies your account.
+                  </p>
+                </div>
+              )
+            }
+            return (
+              <LocalizedClientLink
+                key={item.href}
+                href={item.href}
+                className="block px-4 py-2.5 rounded-lg text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-[#0B3D2E] transition-colors"
+              >
+                {item.label}
+              </LocalizedClientLink>
+            )
+          })}
           <hr className="my-4 border-slate-200" />
           <LocalizedClientLink
             href="/marketplace"

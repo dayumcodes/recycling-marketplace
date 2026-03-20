@@ -31,5 +31,10 @@ export default async function SellerProductsPage() {
 
   const products = await getMyProducts()
 
-  return <SellerProductList products={products} />
+  return (
+    <SellerProductList
+      products={products}
+      canAddProducts={seller.is_verified}
+    />
+  )
 }

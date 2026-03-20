@@ -12,6 +12,7 @@ type Params = {
     page?: string
     category?: string
     seller?: string
+    q?: string
   }>
   params: Promise<{
     countryCode: string
@@ -27,7 +28,13 @@ export const metadata: Metadata = {
 export default async function MarketplacePage(props: Params) {
   const params = await props.params
   const searchParams = await props.searchParams
-  const { sortBy, page, category: categoryHandle, seller: sellerHandle } = searchParams
+  const {
+    sortBy,
+    page,
+    category: categoryHandle,
+    seller: sellerHandle,
+    q: searchQuery,
+  } = searchParams
 
   const [category, sellers] = await Promise.all([
     categoryHandle ? getCategoryByHandle([categoryHandle]) : Promise.resolve(null),
@@ -64,6 +71,7 @@ export default async function MarketplacePage(props: Params) {
         categoryId={category?.id}
         categoryName={category?.name}
         productsIds={productsIds?.length ? productsIds : undefined}
+        searchQuery={searchQuery?.trim() || undefined}
       />
     </div>
   )

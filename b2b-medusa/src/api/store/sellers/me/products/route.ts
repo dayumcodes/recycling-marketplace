@@ -119,6 +119,14 @@ export const POST = async (req: MedusaRequest, res: MedusaResponse) => {
   }
   const seller = sellers[0]
 
+  if (!seller.is_verified) {
+    return res.status(403).json({
+      code: "seller_not_verified",
+      message:
+        "Your seller account must be verified by the platform before you can add products.",
+    })
+  }
+
   const {
     title,
     description,

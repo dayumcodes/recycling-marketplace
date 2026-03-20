@@ -3,21 +3,29 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 
 export default function SellerProductList({
   products,
+  canAddProducts,
 }: {
   products: SellerProduct[]
+  canAddProducts: boolean
 }) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-xl font-bold text-slate-900">
           My Products ({products.length})
         </h1>
-        <LocalizedClientLink
-          href="/seller/products/new"
-          className="bg-[#0B3D2E] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-900 transition-colors"
-        >
-          + Add Product
-        </LocalizedClientLink>
+        {canAddProducts ? (
+          <LocalizedClientLink
+            href="/seller/products/new"
+            className="bg-[#0B3D2E] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-900 transition-colors"
+          >
+            + Add Product
+          </LocalizedClientLink>
+        ) : (
+          <span className="text-sm text-amber-800 bg-amber-50 border border-amber-100 px-4 py-2 rounded-xl">
+            Listing opens when your account is verified.
+          </span>
+        )}
       </div>
 
       {products.length === 0 ? (
@@ -25,12 +33,19 @@ export default function SellerProductList({
           <p className="text-slate-500 mb-4">
             You haven&apos;t listed any products yet.
           </p>
-          <LocalizedClientLink
-            href="/seller/products/new"
-            className="inline-block bg-emerald-50 text-emerald-700 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-emerald-100 transition-colors"
-          >
-            List your first product
-          </LocalizedClientLink>
+          {canAddProducts ? (
+            <LocalizedClientLink
+              href="/seller/products/new"
+              className="inline-block bg-emerald-50 text-emerald-700 px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-emerald-100 transition-colors"
+            >
+              List your first product
+            </LocalizedClientLink>
+          ) : (
+            <p className="text-sm text-amber-800">
+              Your account is pending verification. You&apos;ll be able to list
+              products once a platform admin approves you.
+            </p>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">

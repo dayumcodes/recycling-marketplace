@@ -46,17 +46,27 @@ export default function SellerOverview({
             View and manage your listed products
           </p>
         </LocalizedClientLink>
-        <LocalizedClientLink
-          href="/seller/products/new"
-          className="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-300 hover:shadow-md transition-all group"
-        >
-          <h3 className="font-semibold text-slate-900 group-hover:text-[#0B3D2E] mb-1">
-            Add Product
-          </h3>
-          <p className="text-sm text-slate-500">
-            List a new product on the marketplace
-          </p>
-        </LocalizedClientLink>
+        {seller.is_verified ? (
+          <LocalizedClientLink
+            href="/seller/products/new"
+            className="bg-white rounded-xl border border-slate-200 p-6 hover:border-emerald-300 hover:shadow-md transition-all group"
+          >
+            <h3 className="font-semibold text-slate-900 group-hover:text-[#0B3D2E] mb-1">
+              Add Product
+            </h3>
+            <p className="text-sm text-slate-500">
+              List a new product on the marketplace
+            </p>
+          </LocalizedClientLink>
+        ) : (
+          <div className="bg-slate-50 rounded-xl border border-dashed border-slate-200 p-6">
+            <h3 className="font-semibold text-slate-500 mb-1">Add Product</h3>
+            <p className="text-sm text-amber-800">
+              Listing is enabled after a platform admin verifies your seller
+              account.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { defineMiddlewares, authenticate } from "@medusajs/medusa"
 import { registerLoggedInUser } from "./middlewares/logged-in-user"
 import { adminSellerContext } from "./middlewares/admin-seller-context"
+import { enforceVerifiedSellerCatalogWrites } from "./middlewares/enforce-verified-seller-catalog-writes"
 import { restrictSellerAdminAccess } from "./middlewares/restrict-seller-admin-access"
 
 export default defineMiddlewares({
@@ -19,6 +20,7 @@ export default defineMiddlewares({
         authenticate("user", ["session", "bearer", "api-key"]),
         registerLoggedInUser,
         adminSellerContext,
+        enforceVerifiedSellerCatalogWrites,
         restrictSellerAdminAccess,
       ],
     },

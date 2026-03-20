@@ -3,7 +3,10 @@ import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
 import { SELLER_MODULE } from "../../modules/seller"
 
 type AuthContext = { actor_type?: string; actor_id?: string }
-type RequestWithAuth = MedusaRequest & { auth_context?: AuthContext; sellerContext?: { id: string } }
+type RequestWithAuth = MedusaRequest & {
+  auth_context?: AuthContext
+  sellerContext?: { id: string; is_verified: boolean }
+}
 
 /**
  * Resolves seller when the logged-in admin user is linked to a seller (admin_user_id).
@@ -29,7 +32,10 @@ export async function adminSellerContext(
   }
 
   const seller = sellers[0]
-  ;(req as RequestWithAuth).sellerContext = { id: seller.id }
+  ;(req as RequestWithAuth).sellerContext = {
+    id: seller.id,
+    is_verified: !!seller.is_verified,
+  }
 
   const raw = (req as any).originalUrl ?? req.path ?? (req as any).url ?? ""
   const path = typeof raw === "string" ? raw.split("?")[0] : ""

@@ -1,6 +1,7 @@
 "use server"
 
 import { sdk } from "@lib/config"
+import { getMedusaSellersFetchInit } from "@lib/util/medusa-sellers-fetch"
 import { getCacheOptions } from "./cookies"
 
 export type StoreSeller = {
@@ -11,15 +12,13 @@ export type StoreSeller = {
 
 export async function getSellers(): Promise<StoreSeller[]> {
   try {
-    const next = {
-      ...(await getCacheOptions("sellers")),
-    }
+    const { next, cache } = await getMedusaSellersFetchInit()
     const { sellers } = await sdk.client.fetch<{ sellers: StoreSeller[] }>(
       "/store/sellers",
       {
         method: "GET",
         next,
-        cache: "force-cache",
+        cache,
       }
     )
     return sellers ?? []
