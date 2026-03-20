@@ -18,15 +18,26 @@ export async function adminSellerContext(
   next: () => void | Promise<void>
 ): Promise<void> {
   const auth = (req as RequestWithAuth).auth_context
-  if (!auth?.actor_id || auth.actor_type !== "user") {
+  // For admin routes we need to resolve the linked seller record so we can
+  // gate write operations. Depending on auth flow/session shape, actor_type can
+  // vary, so we only rely on actor_id.
+  if (!auth?.actor_id) {
     return next()
   }
 
-  
   const sellerModuleService = req.scope.resolve(SELLER_MODULE)
-  const sellers = await sellerModuleService.listSellers({
+  let sellers = await sellerModuleService.listSellers({
     admin_user_id: auth.actor_id,
   })
+  // Fallback: in some auth flows actor_id can map to storefront customer id.
+  // Resolve seller in that case too so enforcement doesn't get bypassed.
+  // Only do this when actor_type isn't explicitly "user" to reduce risk of
+  // accidentally matching by customer id.
+  if (!sellers.length && auth.actor_type !== "user") {
+    sellers = await sellerModuleService.listSellers({
+      user_id: auth.actor_id,
+    })
+  }
   if (!sellers.length) {
     return next()
   }

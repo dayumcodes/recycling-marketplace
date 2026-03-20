@@ -36,7 +36,7 @@ jobs:
         with:
           name: node-app
           path: b2b-medusa
-
+          
   deploy:
     runs-on: ubuntu-latest
     needs: build

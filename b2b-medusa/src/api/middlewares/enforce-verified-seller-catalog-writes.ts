@@ -17,18 +17,37 @@ function normalizeAdminPath(req: MedusaRequest): string {
  * Blocks seller admin users from creating products in Medusa Dashboard until
  * `is_verified` is true (platform admin verified them in Medusa or storefront admin).
  */
-function isBlockedProductCreate(path: string, method: string): boolean {
+function isBlockedProductMutation(path: string, method: string): boolean {
   const m = method.toUpperCase()
-  if (m !== "POST") {
+  const isWriteMethod = m === "POST" || m === "PATCH" || m === "PUT" || m === "DELETE"
+  if (!isWriteMethod) {
+    return false
+  }
+
+  // The Medusa Admin "Add Product" flow can touch multiple endpoints
+  // (product + variants) under these route prefixes.
+  if (path.startsWith("/admin/products")) {
+    return true
+  }
+  if (path.startsWith("/admin/product-variants")) {
+    return true
+  }
+
+  return false
+}
+
+function isBlockedProductsPage(path: string, method: string): boolean {
+  // The Medusa Admin "Products" UI loads `/admin/products` first, so block
+  // unverified sellers from even viewing the page.
+  const m = method.toUpperCase()
+  if (m !== "GET") {
     return false
   }
   if (path === "/admin/products") {
     return true
   }
-  if (path.startsWith("/admin/products/batch")) {
-    return true
-  }
-  if (path.startsWith("/admin/products/import")) {
+  // Block common details pages as well.
+  if (path.startsWith("/admin/products/")) {
     return true
   }
   return false
@@ -47,7 +66,11 @@ export async function enforceVerifiedSellerCatalogWrites(
   const path = normalizeAdminPath(req)
   const method = req.method || "GET"
 
-  if (!isBlockedProductCreate(path, method)) {
+  const blocked =
+    isBlockedProductMutation(path, method) ||
+    isBlockedProductsPage(path, method)
+
+  if (!blocked) {
     return next()
   }
 
