@@ -1,6 +1,11 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
+
+const fileBackendBase =
+  process.env.MEDUSA_FILE_BACKEND_URL?.replace(/\/$/, "") ||
+  process.env.MEDUSA_BACKEND_URL?.replace(/\/$/, "") ||
+  "http://localhost:9000"
 
 module.exports = defineConfig({
   projectConfig: {
@@ -14,6 +19,20 @@ module.exports = defineConfig({
     }
   },
   modules: {
+    [Modules.FILE]: {
+      resolve: "@medusajs/medusa/file",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/file-local",
+            id: "local",
+            options: {
+              backend_url: `${fileBackendBase}/static`,
+            },
+          },
+        ],
+      },
+    },
     sellerModule: {
       resolve: "./src/modules/seller",
       definition: {
